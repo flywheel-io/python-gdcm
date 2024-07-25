@@ -241,13 +241,12 @@ class CMakeBuildExt(build_ext):
             super().build_extension(ext)
 
 
-# setuptools.setup(
-#     ext_package="_gdcm",
-#     ext_modules=[
-#         ConfiguredCMakeExtension("_gdcm", target="_gdcm"),
-#     ],
-#     cmdclass={
-#         "build_ext": CMakeBuildExt,
-#     },
-# )
-patch_gdcm()
+setuptools.setup(
+    ext_package="_gdcm",
+    ext_modules=[
+        ConfiguredCMakeExtension("_gdcm", target="_gdcm"),
+    ],
+    cmdclass={
+        "build_ext": CMakeBuildExt,
+    },
+)
