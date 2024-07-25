@@ -21,14 +21,15 @@ GDCM_MODULE = os.path.join(CURRENT_DIR, "_gdcm")
 
 
 def patch_gdcm():
+    # TODO: Do this patch replacement automatically by reading in a patch file (from a diff)
+
     with open(os.path.join(GDCM_SOURCE,"Wrapping/Python/gdcmswig.i"), 'r+') as f:
         lines = f.readlines()
-
+        print(lines)
         insert_idx = lines.index("    self->GetBuffer(*buffer);\n")
 
         lines[insert_idx] = "    bool ret = self->GetBuffer(*buffer);\n"
 
-        # TODO: Do this patch replacement automatically by reading in a patch file (from a diff)
         patch = ['    if (!ret) {\n', 
                  '      free(*buffer);\n', 
                  '      *buffer = 0;\n', 
@@ -41,6 +42,32 @@ def patch_gdcm():
 
         f.seek(0)
         f.writelines(lines)
+
+    with open(os.path.join(GDCM_SOURCE, "Source/MediaStorageAndFileFormat/gdcmJPEGCodec.cxx"), 'r+') as f:
+        lines = f.readlines()
+
+        lines.remove('          gdcmWarningMacro( "Invalid JPEG Fragment found at pos #" << i + 1 << ". Skipping it" );\n')
+        insert_idx = lines.index("          assert( nfrags == this->GetNumberOfDimensions() ); (void)nfrags; // sentinel\n")
+
+        patch = [
+                '          if (nfrags == this->GetNumberOfDimensions() )\n',
+                '            {\n',
+                '              (void)nfrags; //sentinel\n',
+                '              gdcmWarningMacro( "Invalid JPEG Fragment found at pos #" << i + 1 << ". Skipping it" );\n',
+                '            }\n',
+                '          else {\n',
+                '            return false;\n',
+                '\n',
+                '          }\n'
+        ]
+
+        for p in patch:
+            lines.insert(insert_idx , p)
+            insert_idx += 1
+
+        f.seek(0)
+        f.writelines(lines)
+
 
 # See https://stackoverflow.com/a/50357801/115612
 def get_libpython():
@@ -214,12 +241,13 @@ class CMakeBuildExt(build_ext):
             super().build_extension(ext)
 
 
-setuptools.setup(
-    ext_package="_gdcm",
-    ext_modules=[
-        ConfiguredCMakeExtension("_gdcm", target="_gdcm"),
-    ],
-    cmdclass={
-        "build_ext": CMakeBuildExt,
-    },
-)
+# setuptools.setup(
+#     ext_package="_gdcm",
+#     ext_modules=[
+#         ConfiguredCMakeExtension("_gdcm", target="_gdcm"),
+#     ],
+#     cmdclass={
+#         "build_ext": CMakeBuildExt,
+#     },
+# )
+patch_gdcm()
