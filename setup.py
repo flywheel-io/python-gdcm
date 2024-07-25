@@ -25,7 +25,7 @@ def patch_gdcm():
 
     with open(os.path.join(GDCM_SOURCE,"Wrapping/Python/gdcmswig.i"), 'r+') as f:
         lines = f.readlines()
-        print(lines)
+
         insert_idx = lines.index("    self->GetBuffer(*buffer);\n")
 
         lines[insert_idx] = "    bool ret = self->GetBuffer(*buffer);\n"
