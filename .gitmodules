@@ -1,3 +1,0 @@
-[submodule "gdcm_src"]
-	path = gdcm_src
-	url = https://github.com/malaterre/GDCM.git
